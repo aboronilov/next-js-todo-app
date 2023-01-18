@@ -9,9 +9,12 @@ type PageProps = {
 };
 
 const fetchTodo = async (todoId: string) => {
-  const { data: todo } = await axios.get<Todo>(
-    `https://jsonplaceholder.typicode.com/todos/${todoId}`
+  const res = await fetch(
+    `https://jsonplaceholder.typicode.com/todos/${todoId}`,
+    { next: { revalidate: 60 } }
   );
+  const todo: Todo = await res.json();
+
   return todo;
 };
 
@@ -32,3 +35,16 @@ const TodoPage = async ({ params: { todoId } }: PageProps) => {
 };
 
 export default TodoPage;
+
+export async function generateStaticParams() {
+    const res = await fetch("https://jsonplaceholder.typicode.com/todos/");
+    const todos: Todo[] = await res.json()
+
+    // for this DEMO we are only prebuilding the first 10 pages to avoid being rate limited by the API
+
+    const trimmedTodos = todos.splice(0, 10)
+
+    return trimmedTodos.map((item) => ({
+        todoId: item.id.toString()
+    }))
+}
